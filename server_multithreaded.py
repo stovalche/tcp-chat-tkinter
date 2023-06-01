@@ -19,6 +19,7 @@ sock.bind(server_address)
 # Listen to clients, backlog arguments specifies the max no of queued connections
 sock.listen(backlog)
 
+
 def remove_client(connection):
   addr = client_addr[connection]
   name = client_name[connection]
@@ -43,29 +44,48 @@ def broadcast(client_sender, full_message):
   for client in client_connection:
     if client != client_sender:
       try:
-        message = f"{client_addr[client_sender]}:{full_message}"
+        message = ""
+        if full_message.split(':')[0] == "12345678file":
+          filename = full_message.split(':')[1]
+          filedata = full_message.split(':')[2]
+          message = f"12345678file:{client_addr[client_sender]}:{filename}:{filedata}"
+        else:
+          message = f"{client_addr[client_sender]}:{full_message}"
         client.send(message.encode('utf-8'))
       except socket.error:
         print("# broadcast exception!")
         remove_client(client)
 
 def private(sender, coded_message):
+  filename = ""
+  filedata = "" 
+  full_message = ""
   client_addr_target = coded_message.split(':')[1]
   client_conn_target = client_connectionbyaddr[str(client_addr_target)]
-  full_message = ""
-  for i in range(2, coded_message.split(':').__len__()):
-    if i != 2:
-      full_message += ':'
-    full_message += coded_message.split(':')[i]
+  if coded_message.split(':')[2] == "12345678file":
+    filename = coded_message.split(':')[3]
+    for i in range(4, coded_message.split(':').__len__()):
+      if i > 4:
+        filedata += ':'
+      filedata += coded_message.split(':')[i]
+  else:
+    for i in range(2, coded_message.split(':').__len__()):
+      if i != 2:
+        full_message += ':'
+      full_message += coded_message.split(':')[i]
   for client in client_connection:
     if str(client) == str(client_conn_target):
-      client.send(f"{client_name[sender]} : {full_message}".encode('utf-8'))
+      if coded_message.split(':')[2] == "12345678file":
+        message = f"12345678private:12345678file:{client_addr[sender]}:{filename}:{filedata}"
+      else:
+        message = f"12345678private:{client_addr[sender]}:{full_message}"
+      client.send(message.encode('utf-8'))
 
 def update_new_user(new_client, addr, name, full_message):
   if client_connection.__len__() > 0:
     initial_message = "12345678initialclients/"
     for client in client_connection:
-      initial_message += f"{client_addr[client]}:{client}:{client_name[client]}/"
+      initial_message += f"{client_addr[client]}:{client_name[client]}/"
     new_client.send(initial_message.encode('utf-8'))
   else:
     new_client.send("12345678nothing".encode('utf-8'))
@@ -76,7 +96,7 @@ def update_new_user(new_client, addr, name, full_message):
   for client in client_connection:
     if client != new_client:
       try:
-        client.send(f"12345678newuser:{addr}:{new_client}:{name}:{full_message}".encode('utf-8'))
+        client.send(f"12345678newuser:{addr}:{name}:{full_message}".encode('utf-8'))
       except socket.error:
         print("# update_new_user exception!")
         remove_client(client)
