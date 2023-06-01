@@ -4,6 +4,7 @@ import _thread
 import pathlib
 import tkinter as tk
 import platform
+from tkinter import ttk
 from tkinter import messagebox, filedialog
 from external_elements import colorscheme
 
@@ -17,7 +18,8 @@ class elements():
   client_namebyaddr = {}
   message_code = ""
   hist = ""
-  path = platform.system()
+  os = platform.system()
+  path = pathlib.Path().resolve()
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 data_payload = (50 * (1024 * 10^3)) # 1 frame data
@@ -31,7 +33,7 @@ def create_connection():
   message = "12345678login:" + elements.username
   sock.sendall(message.encode('utf-8'))
 
-  hist_writer("chat_room", f"{elements.username} (You) were joined!\n")
+  hist_writer("chat_room", f"{elements.username} (You) are joined!\n")
 
   data = sock.recv(data_payload)
   coded_message = data.decode('utf-8')
@@ -46,29 +48,33 @@ def create_connection():
         elements.client_namebyaddr.update({str(addr): str(name)})
 
 def hist_writer(addr, formatted_message):
-  cur_os = elements.path
+  cur_os = elements.os
   if cur_os == "Linux" or cur_os == "Darwin":
     sep = '/'
   elif cur_os == "Windows":
     sep = '\\'
   else:
     sep = '/'
-  path = pathlib.Path().resolve()
-  file = open(f"{path}{sep}hist{sep}{elements.username}_{addr}.txt", 'a')
+  dirpath = f"{elements.path}{sep}hist"
+  if not os.path.exists(dirpath):
+    os.mkdir(dirpath)
+  file = open(f"{dirpath}{sep}{elements.username}_{addr}.txt", 'a')
   file.write(formatted_message)
   file.close()
 
 def hist_reader(addr):
-  cur_os = elements.path
+  cur_os = elements.os
   if cur_os == "Linux" or cur_os == "Darwin":
     sep = '/'
   elif cur_os == "Windows":
     sep = '\\'
   else:
     sep = '/'
-  path = pathlib.Path().resolve()
-  if os.path.exists(f"{path}{sep}hist{sep}{elements.username}_{addr}.txt"):
-    file = open(f"{path}{sep}hist{sep}{elements.username}_{addr}.txt", 'r')
+  dirpath = f"{elements.path}{sep}hist"
+  if not os.path.exists(dirpath):
+    os.mkdir(dirpath)
+  if os.path.exists(f"{dirpath}{sep}{elements.username}_{addr}.txt"):
+    file = open(f"{dirpath}{sep}{elements.username}_{addr}.txt", 'r')
     return f"{file.read()}"; file.close()
   else:
     hist_writer(addr, "")
@@ -154,19 +160,17 @@ def session_window():
       
     # users frame
     users_frame = tk.Frame(body_frame, background=color["base03"])
-    users_frame.pack(side=tk.LEFT, fill="both", pady=10)
+    users_frame.pack(side=tk.LEFT, fill="x", pady=10, expand=True)
     users_title_frame = tk.Frame(users_frame, background=color["base03"])
     users_title_frame.pack(fill='y')
     users_label = tk.Label(users_title_frame, text="Chat", font=("Hack NF", 13), foreground=color["base2"], background=color["base03"])
     users_label.pack(side=tk.RIGHT, fill='y')
-    users_canvas = tk.Canvas(users_frame, width=15, height=15, background=color["base00"])
+    users_canvas = tk.Canvas(users_frame, background=color["base00"], width=148)
     ##---------- scrollregion has to be larger than canvas size
     ##           otherwise it just stays in the visible canvas
     users_canvas.pack(side=tk.LEFT, padx=5, pady=10, fill="y", expand=True)
-    users_button = tk.Button(users_canvas, width=15, height=1, text="Chat room", background=color["blue"], foreground=color["base2"])
-    users_button.pack(fill='y')
-    users_canvas_scrollable = tk.Scrollbar(users_frame, orient="vertical", command=users_canvas.yview, background=color["base02"], border=0)
-    users_canvas_scrollable.pack(side=tk.LEFT, fill="y")
+    users_canvas_scrollable = ttk.Scrollbar(users_frame, orient="vertical", command=users_canvas.yview)
+    users_canvas_scrollable.pack(side=tk.RIGHT, fill="y")
     users_canvas.configure(yscrollcommand=users_canvas_scrollable.set)
 
     def max_char(string):
@@ -233,7 +237,7 @@ def session_window():
     chat_label.pack(side=tk.RIGHT, fill='y')
     chat_text = tk.Text(chat_frame, height=15, width=70, font=("Hack NF", 10), foreground=color["base2"], background=color["base01"], border=0)
     chat_text.pack(side=tk.LEFT, padx=5, pady=10, expand=True, fill="y")
-    chat_box_scrollable = tk.Scrollbar(chat_frame, orient="vertical", command=chat_text.yview, background=color["base02"], border=0)
+    chat_box_scrollable = ttk.Scrollbar(chat_frame, orient="vertical", command=chat_text.yview)
     chat_box_scrollable.pack(side=tk.RIGHT, fill="y")
     chat_text.configure(cursor="arrow", state=tk.DISABLED, yscrollcommand=chat_box_scrollable.set)
 
@@ -262,13 +266,23 @@ def session_window():
         if i > index+3:
           full_data += ':'
         full_data += coded_message.split(':')[i]
-      file = open(f"./received/{filename}", 'w')
+      cur_os = elements.os
+      if cur_os == "Linux" or cur_os == "Darwin":
+        sep = '/'
+      elif cur_os == "Windows":
+        sep = '\\'
+      else:
+        sep = '/'
+      dirpath = f"{elements.path}{sep}received"
+      if not os.path.exists(dirpath):
+        os.mkdir(dirpath)
+      file = open(f"{dirpath}{sep}{filename}", 'w')
       file.write(full_data)
       file.close()
       if private == 1:
-        chat_text_update(addr, f"{elements.client_namebyaddr[str(addr)]} : File => {filename}\n")
+        chat_text_update(addr, f"{elements.client_namebyaddr[str(addr)]} : (File) => {filename}\n")
       else:
-        chat_text_update("chat_room", f"{elements.client_namebyaddr[str(addr)]} : File => {filename}\n")
+        chat_text_update("chat_room", f"{elements.client_namebyaddr[str(addr)]} : (File) => {filename}\n")
 
     def receive_handler():
       while True:
@@ -355,7 +369,7 @@ def session_window():
         filename = filename[filename.__len__() - 1]
         entry.configure(state=tk.NORMAL)
         entry.delete("1.0", tk.END)
-        chat_text_update(elements.hist, outputframe(f"{elements.username} (You)", f"File => {filename}\n"))
+        chat_text_update(elements.hist, outputframe(f"{elements.username} (You)", f"(File) => {filename}\n"))
         sock.send(f"{elements.message_code}12345678file:{filename}:{data_readed}".encode('utf-8'))
         file_data.close()
         text_send_button.configure(command=_on_send_action)
@@ -383,7 +397,7 @@ def session_window():
   def footer():
     def _on_exit_pressed():
 
-      full_message = f"{elements.username} (You) were exited!\n" 
+      full_message = f"{elements.username} (You) are exited!\n" 
       hist_writer("chat_room", full_message)
 
       sock.send(f"12345678exit".encode('utf-8'))
