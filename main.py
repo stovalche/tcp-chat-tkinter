@@ -4,7 +4,7 @@ import _thread
 import pathlib
 import tkinter as tk
 import platform
-from tkinter import ttk
+from tkinter import XView, ttk
 from tkinter import messagebox, filedialog
 from external_elements import colorscheme
 
@@ -159,16 +159,16 @@ def session_window():
         return f"{message}"
       
     # users frame
-    users_frame = tk.Frame(body_frame, background=color["base03"])
-    users_frame.pack(side=tk.LEFT, fill="x", pady=10, expand=True)
-    users_title_frame = tk.Frame(users_frame, background=color["base03"])
-    users_title_frame.pack(fill='y')
+    users_frame = tk.Frame(body_frame, background=color["base03"], border=0)
+    users_frame.pack(side=tk.LEFT, fill="x", pady=10, padx=5, expand=True)
+    users_title_frame = tk.Frame(users_frame, border=0)
+    users_title_frame.pack(fill='y', pady=10)
     users_label = tk.Label(users_title_frame, text="Chat", font=("Hack NF", 13), foreground=color["base2"], background=color["base03"])
     users_label.pack(side=tk.RIGHT, fill='y')
-    users_canvas = tk.Canvas(users_frame, background=color["base00"], width=148)
+    users_canvas = tk.Canvas(users_frame, background=color["base00"], border=0, width=160)
     ##---------- scrollregion has to be larger than canvas size
     ##           otherwise it just stays in the visible canvas
-    users_canvas.pack(side=tk.LEFT, padx=5, pady=10, fill="y", expand=True)
+    users_canvas.pack(side=tk.LEFT, expand=True, fill="y")
     users_canvas_scrollable = ttk.Scrollbar(users_frame, orient="vertical", command=users_canvas.yview)
     users_canvas_scrollable.pack(side=tk.RIGHT, fill="y")
     users_canvas.configure(yscrollcommand=users_canvas_scrollable.set)
@@ -208,10 +208,10 @@ def session_window():
         chat_text.yview_pickplace(tk.END)
         chat_text.configure(state=tk.DISABLED)
       users_canvas.config(scrollregion=( 0, 0, 0, 0))
-      users_button = tk.Button(users_canvas, width=15, height=1, text="Chat room", background=color["blue"], foreground=color["base2"])
+      users_button = tk.Button(users_canvas, height=1, text="Chat room", background=color["blue"], foreground=color["base2"])
       users_button.config(command=_on_chat_room_pressed)
-      users_button.pack(fill='y')
-      users_canvas.create_window(0, 0, anchor='nw', window=users_button)
+      users_button.pack(fill='x')
+      users_canvas.create_window(0, 0, anchor='nw', window=users_button, width=160)
       for client_addr in elements.client_addr:
         def _on_contact_pressed_caller(x = str(client_addr)):
           return _on_contact_pressed(x)
@@ -219,10 +219,10 @@ def session_window():
           client_name = elements.clients[index - 1]
           shorted_client_name = max_char(client_name)
           users_canvas.config(scrollregion=( 0, 0, (index*30), (index*30 + (3 * index))))
-          users_button = tk.Button(users_canvas, width=15, height=1, text=shorted_client_name, background=color["blue"], foreground=color["base2"])
+          users_button = tk.Button(users_canvas, height=1, text=shorted_client_name, background=color["blue"], foreground=color["base2"])
           users_button.config(command=_on_contact_pressed_caller)
-          users_button.pack(fill='y')
-          users_canvas.create_window(0, (30*index), anchor='nw', window=users_button)
+          users_button.pack(fill='x')
+          users_canvas.create_window(0, (30*index), anchor='nw', window=users_button, width=160)
         index += 1
 
     # to check if there was some users or not
@@ -232,11 +232,11 @@ def session_window():
     chat_frame = tk.LabelFrame(body_frame, background=color["base03"], border=0)
     chat_frame.pack(side=tk.RIGHT, fill='x', expand=True, pady=10, padx=5)
     chat_title_frame = tk.Frame(chat_frame, border=0)
-    chat_title_frame.pack(fill='y')
+    chat_title_frame.pack(fill='y', pady=10)
     chat_label = tk.Label(chat_title_frame, text="Chat room", font=("Hack NF", 13), foreground=color["base2"], background=color["base03"])
     chat_label.pack(side=tk.RIGHT, fill='y')
-    chat_text = tk.Text(chat_frame, height=15, width=70, font=("Hack NF", 10), foreground=color["base2"], background=color["base01"], border=0)
-    chat_text.pack(side=tk.LEFT, padx=5, pady=10, expand=True, fill="y")
+    chat_text = tk.Text(chat_frame, height=15, width=80, font=("Hack NF", 10), foreground=color["base2"], background=color["base01"], border=4)
+    chat_text.pack(side=tk.LEFT, expand=True, fill="both")
     chat_box_scrollable = ttk.Scrollbar(chat_frame, orient="vertical", command=chat_text.yview)
     chat_box_scrollable.pack(side=tk.RIGHT, fill="y")
     chat_text.configure(cursor="arrow", state=tk.DISABLED, yscrollcommand=chat_box_scrollable.set)
@@ -260,7 +260,6 @@ def session_window():
         index = 0
       addr = coded_message.split(':')[index+1]
       filename = coded_message.split(':')[index+2]
-      print(filename)
       full_data = ""
       for i in range(index+3, coded_message.split(':').__len__()):
         if i > index+3:
@@ -298,7 +297,6 @@ def session_window():
           user_update()
           chat_text_update("chat_room", outputframe("", full_message))
         elif message.split(':')[0] == "12345678private":
-          print(message)
           if message.split(':')[1] == "12345678file":
             file_receiver(1, message)
           else:
@@ -322,7 +320,6 @@ def session_window():
           user_update()
           chat_text_update("chat_room", outputframe("", full_message))
         else:
-          print(message)
           if message.split(':')[0] == "12345678file":
             file_receiver(0, message)
           else:
@@ -351,7 +348,7 @@ def session_window():
         print ("Socket error: %s" %str(e))
 
     entry_frame = tk.Frame(window, background=color["base03"])
-    entry_frame.pack(padx=10,pady=10,fill="x",expand=True)
+    entry_frame.pack(padx=10, fill="x", expand=True)
 
     def _on_cancel_file():
       entry.configure(state=tk.NORMAL)
@@ -385,8 +382,8 @@ def session_window():
     file_send_button.pack(side=tk.LEFT,padx=10,pady=10,fill="x",expand=True)
 
     # entry text box
-    entry = tk.Text(entry_frame, height=2, width=70, font=("Hack NF", 10), foreground=color["base2"], background=color["base01"])
-    entry.pack(side=tk.LEFT, padx=5, pady=5, expand=False)
+    entry = tk.Text(entry_frame, height=2,  font=("Hack NF", 10), foreground=color["base2"], background=color["base01"])
+    entry.pack(side=tk.LEFT, pady=5, expand=False)
     entry.focus()
 
     # text send Button
@@ -405,7 +402,7 @@ def session_window():
       exit(0)
 
     exit_button = tk.Button(window, text="Exit", command=_on_exit_pressed, font=("Hack NF", 13),  foreground=color["base3"], background=color["yellow"])
-    exit_button.pack(padx=10, pady=10, expand=True)
+    exit_button.pack(pady=20, expand=True)
 
   header()
   body()
