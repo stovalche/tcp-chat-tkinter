@@ -4,7 +4,7 @@ import _thread
 import pathlib
 import tkinter as tk
 import platform
-from tkinter import XView, ttk
+from tkinter import ttk
 from tkinter import messagebox, filedialog
 from external_elements import colorscheme
 
@@ -279,9 +279,9 @@ def session_window():
       file.write(full_data)
       file.close()
       if private == 1:
-        chat_text_update(addr, f"{elements.client_namebyaddr[str(addr)]} : (File) => {filename}\n")
+        chat_text_update(addr, f"{elements.client_namebyaddr[str(addr)]} : █ {filename}\n")
       else:
-        chat_text_update("chat_room", f"{elements.client_namebyaddr[str(addr)]} : (File) => {filename}\n")
+        chat_text_update("chat_room", f"{elements.client_namebyaddr[str(addr)]} : █ {filename}\n")
 
     def receive_handler():
       while True:
@@ -317,20 +317,22 @@ def session_window():
           full_message = f"{name} <{addr}> is exited!\n" 
           if elements.client_addr.__len__() == 0:
             elements.hist = "chat_room"
+            chat_label.config(text="Chat room")
           user_update()
           chat_text_update("chat_room", outputframe("", full_message))
         else:
           if message.split(':')[0] == "12345678file":
             file_receiver(0, message)
           else:
-            full_message = ""
-            addr = str(message.split(':')[0])
-            name = elements.client_namebyaddr[addr]
-            for i in range(1, message.split(':').__len__()):
-              if i > 1:
-                full_message += ':'
-              full_message += message.split(':')[i]
-            chat_text_update("chat_room", outputframe(name, full_message))
+            if message != "":
+              addr = str(message.split(':')[0])
+              name = elements.client_namebyaddr[addr]
+              full_message = ""
+              for i in range(1, message.split(':').__len__()):
+                if i > 1:
+                  full_message += ':'
+                full_message += message.split(':')[i]
+              chat_text_update("chat_room", outputframe(name, full_message))
 
     _thread.start_new_thread(receive_handler, ())
 
@@ -366,13 +368,13 @@ def session_window():
         filename = filename[filename.__len__() - 1]
         entry.configure(state=tk.NORMAL)
         entry.delete("1.0", tk.END)
-        chat_text_update(elements.hist, outputframe(f"{elements.username} (You)", f"(File) => {filename}\n"))
+        chat_text_update(elements.hist, outputframe(f"{elements.username} (You)", f"█ {filename}\n"))
         sock.send(f"{elements.message_code}12345678file:{filename}:{data_readed}".encode('utf-8'))
         file_data.close()
         text_send_button.configure(command=_on_send_action)
       if f"{file}" != "()" and f"{file}" != "":
         entry.delete("1.0", tk.END)
-        entry.insert(tk.END, f"Send file: {file}")
+        entry.insert(tk.END, f"Send file: █ {file}")
         entry.configure(state=tk.DISABLED)
         file_send_button.configure(text="Cancel", command=_on_cancel_file)
         text_send_button.configure(command=_on_send_file)
