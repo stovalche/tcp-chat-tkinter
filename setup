@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+root_privilege=""
+pkg_mgr_cmd=""
+distro_fam=""
+pkg=""
+#
+
+function installation(){
+  if [ "$root_privilege" == "" ]; then
+    $pkg_mgr_cmd $pkg
+  else
+    $root_privilege $pkg_mgr_cmd $pkg
+  fi
+}
+
+function distro_check(){
+  if $(which pacman > /dev/null); then
+    pkg_mgr_cmd="pacman -Sy"
+    pkg="tk"
+  elif $(which apt > /dev/null); then
+    pkg_mgr_cmd="apt-get install"
+    pkg="python3-tk"
+  fi
+  installation
+}
+
+if $(which sudo &> /dev/null); then
+  root_privilege="sudo"
+  distro_check
+elif $(which doas &> /dev/null); then
+  root_privilege="doas"
+  distro_check
+elif [ "$EUID" -ne 0 ]; then
+  echo "Run this file as a root user!"
+fi
